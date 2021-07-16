@@ -1,12 +1,13 @@
-import { ENETDOWN } from "constants";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "webrtc-adapter";
+import { useIncomingSignaling } from "../hooks/useIncomingSignaling";
+import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
 
 interface PeerConnectionProps {
   peerId: string;
 }
 
-export const PeerConnection: React.FC<PeerConnectionProps> = ({}) => {
+export const PeerConnection: React.FC<PeerConnectionProps> = ({ peerId }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -17,12 +18,23 @@ export const PeerConnection: React.FC<PeerConnectionProps> = ({}) => {
     null
   );
 
+  const { sendOffer, sendAnswer, sendIceCandidate } = useOutgoingSignaling({
+    peerId,
+  });
+
   const onRemoteStream = useCallback((e: RTCTrackEvent) => {
     const remoteVideo = remoteVideoRef.current!;
     if (remoteVideo.srcObject !== e.streams[0]) {
       remoteVideo.srcObject = e.streams[0];
     }
   }, []);
+
+  const onGotIceCandidate = useCallback(
+    (e: RTCPeerConnectionIceEvent) => {
+      sendIceCandidate(JSON.stringify(e.candidate?.toJSON()));
+    },
+    [sendIceCandidate]
+  );
 
   const startCall = useCallback(async () => {
     const pc1 = new RTCPeerConnection();
@@ -37,10 +49,22 @@ export const PeerConnection: React.FC<PeerConnectionProps> = ({}) => {
       offerToReceiveVideo: true,
     });
 
-    // TODO: send offer
-    // TODO: send ice candidate
+    await peerConnection?.setLocalDescription(offer);
+    sendOffer(offer.sdp ?? "");
+
     pc1.ontrack = onRemoteStream;
-  }, []);
+    pc1.onicecandidate = onGotIceCandidate;
+  }, [
+    localMediaStream,
+    onGotIceCandidate,
+    onRemoteStream,
+    peerConnection,
+    sendOffer,
+  ]);
+
+  const endCall = useCallback(() => {
+    peerConnection?.close();
+  }, [peerConnection]);
 
   useEffect(() => {
     const getMedia = async () => {
@@ -54,9 +78,42 @@ export const PeerConnection: React.FC<PeerConnectionProps> = ({}) => {
     getMedia();
   }, []);
 
-  // TODO: on remote offer
-  // TODO: on remote answer
-  // TOOD: on remote ice candidate
+  const onOffer = useCallback(
+    async (message: string) => {
+      await peerConnection?.setRemoteDescription({
+        sdp: message,
+        type: "offer",
+      });
+      const answer = await peerConnection?.createAnswer();
+      sendAnswer(answer?.sdp ?? "");
+      peerConnection?.setLocalDescription(answer);
+    },
+    [peerConnection, sendAnswer]
+  );
+
+  const onAnswer = useCallback(
+    async (message: string) => {
+      await peerConnection?.setRemoteDescription({
+        sdp: message,
+        type: "answer",
+      });
+    },
+    [peerConnection]
+  );
+
+  const onIceCandidate = useCallback(
+    async (message: string) => {
+      const candidate: RTCIceCandidateInit = JSON.parse(message);
+      await peerConnection?.addIceCandidate(candidate);
+    },
+    [peerConnection]
+  );
+
+  useIncomingSignaling({
+    onAnswer,
+    onOffer,
+    onIceCandidate,
+  });
 
   return (
     <div>
@@ -77,6 +134,8 @@ export const PeerConnection: React.FC<PeerConnectionProps> = ({}) => {
           height: "180px",
         }}
       />
+      <button onClick={startCall}>Call </button>{" "}
+      <button onClick={endCall}>Hang Up </button>{" "}
     </div>
   );
 };
