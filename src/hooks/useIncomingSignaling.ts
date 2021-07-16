@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Signaling from "../contracts/Signaling";
+import web3 from "../utils/web3";
 
 interface SignalingProps {
   onAnswer: (message: string) => void;
@@ -14,6 +15,8 @@ export const useIncomingSignaling = ({
 }: SignalingProps) => {
   useEffect(() => {
     const fetch = async () => {
+      const accounts = await web3.eth.getAccounts();
+
       Signaling.events
         .Message()
         .on("connected", function (subscriptionId: any) {
@@ -21,18 +24,21 @@ export const useIncomingSignaling = ({
         })
         .on("data", function (event: any) {
           console.log(event);
+          const to = event[1] as string;
           const type = event[2] as string;
           const message = event[3] as string;
-          switch (type) {
-            case "offer":
-              onOffer(message);
-              break;
-            case "answer":
-              onAnswer(message);
-              break;
-            case "ice":
-              onIceCandidate(message);
-              break;
+          if (to === accounts[0]) {
+            switch (type) {
+              case "offer":
+                onOffer(message);
+                break;
+              case "answer":
+                onAnswer(message);
+                break;
+              case "ice":
+                onIceCandidate(message);
+                break;
+            }
           }
         });
     };
