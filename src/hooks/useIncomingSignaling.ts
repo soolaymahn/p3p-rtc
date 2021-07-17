@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import Signaling from "../contracts/Signaling";
-import web3 from "../utils/web3";
+import { SignalingSocket } from "../contracts/Signaling";
+import { web3 } from "../utils/web3";
 
 interface SignalingProps {
   onAnswer: (message: string) => void;
@@ -17,7 +17,7 @@ export const useIncomingSignaling = ({
     const fetch = async () => {
       const accounts = await web3.eth.getAccounts();
 
-      Signaling.events
+      SignalingSocket.events
         .Message()
         .on("connected", function (subscriptionId: any) {
           console.log(subscriptionId);

@@ -1,4 +1,4 @@
-import web3 from "../utils/web3";
+import { web3, web3Websocket } from "../utils/web3";
 
 const address = "0xB08177838039c27C84fb54767559FF455E01E69F";
 
@@ -59,4 +59,5 @@ const abi = [
   },
 ];
 
-export default new web3.eth.Contract(abi, address);
+export const Signaling = new web3.eth.Contract(abi, address);
+export const SignalingSocket = new web3Websocket.eth.Contract(abi, address);

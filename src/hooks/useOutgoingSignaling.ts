@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import web3 from "../utils/web3";
-import Signaling from "../contracts/Signaling";
+import { web3 } from "../utils/web3";
+import { Signaling } from "../contracts/Signaling";
 
 interface SignalingProps {
   peerId: string;
