@@ -16,6 +16,7 @@ export const useIncomingSignaling = ({
   useEffect(() => {
     const fetch = async () => {
       const accounts = await web3.eth.getAccounts();
+      console.log("account", accounts[0]);
 
       SignalingSocket.events
         .Message()
