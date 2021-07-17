@@ -10,10 +10,6 @@ export const PeerConnection: React.FC = () => {
   const [peerConnection, setPeerConnection] =
     useState<RTCPeerConnection | null>(null);
 
-  const [localMediaStream, setLocalMediaStream] = useState<MediaStream | null>(
-    null
-  );
-
   const [peerId, setPeerId] = useState("");
 
   const { sendOffer, sendAnswer, sendIceCandidate } = useOutgoingSignaling({
@@ -72,7 +68,6 @@ export const PeerConnection: React.FC = () => {
       });
       console.log("got media");
       localVideoRef.current!.srcObject = media;
-      setLocalMediaStream(media);
 
       const pc = new RTCPeerConnection();
       setPeerConnection(pc);
