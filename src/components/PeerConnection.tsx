@@ -28,24 +28,27 @@ export const PeerConnection: React.FC = () => {
     }
   }, []);
 
+  const onIceStateChange = useCallback(
+    (e) => {
+      console.log("ICE state:", peerConnection!.iceConnectionState);
+    },
+    [peerConnection]
+  );
+
   const onGotIceCandidate = useCallback(
     (e: RTCPeerConnectionIceEvent) => {
-      console.log("sending ice");
-      sendIceCandidate(JSON.stringify(e.candidate?.toJSON()));
+      console.log("sending ice", e);
+      if (e.candidate) {
+        sendIceCandidate(JSON.stringify(e.candidate?.toJSON()));
+      }
     },
     [sendIceCandidate]
   );
 
   const startCall = useCallback(async () => {
     console.log("starting call");
-    const pc1 = new RTCPeerConnection();
-    setPeerConnection(pc1);
 
-    localMediaStream!
-      .getTracks()
-      .forEach((track) => pc1.addTrack(track, localMediaStream!));
-
-    const offer = await pc1.createOffer({
+    const offer = await peerConnection!.createOffer({
       offerToReceiveAudio: true,
       offerToReceiveVideo: true,
     });
@@ -53,16 +56,8 @@ export const PeerConnection: React.FC = () => {
     await peerConnection?.setLocalDescription(offer);
     sendOffer(offer.sdp ?? "");
 
-    pc1.ontrack = onRemoteStream;
-    pc1.onicecandidate = onGotIceCandidate;
-    console.log("sent offer");
-  }, [
-    localMediaStream,
-    onGotIceCandidate,
-    onRemoteStream,
-    peerConnection,
-    sendOffer,
-  ]);
+    console.log("sent offer", offer.sdp);
+  }, [peerConnection, sendOffer]);
 
   const endCall = useCallback(() => {
     peerConnection?.close();
@@ -78,28 +73,41 @@ export const PeerConnection: React.FC = () => {
       console.log("got media");
       localVideoRef.current!.srcObject = media;
       setLocalMediaStream(media);
+
+      const pc = new RTCPeerConnection();
+      setPeerConnection(pc);
+      media.getTracks().forEach((track) => pc!.addTrack(track, media!));
     };
     getMedia();
   }, []);
 
+  useEffect(() => {
+    if (peerConnection) {
+      peerConnection.ontrack = onRemoteStream;
+      peerConnection.onicecandidate = onGotIceCandidate;
+      peerConnection.oniceconnectionstatechange = onIceStateChange;
+    }
+  }, [onGotIceCandidate, onIceStateChange, onRemoteStream, peerConnection]);
+
   const onOffer = useCallback(
     async (message: string) => {
-      console.log("got offer");
+      console.log("got offer", message);
       await peerConnection?.setRemoteDescription({
         sdp: message,
         type: "offer",
       });
       const answer = await peerConnection?.createAnswer();
-      sendAnswer(answer?.sdp ?? "");
+      console.log("answer", peerId, answer);
       peerConnection?.setLocalDescription(answer);
-      console.log("sent answer");
+      await sendAnswer(answer?.sdp ?? "");
+      console.log("sent answer", answer?.sdp);
     },
-    [peerConnection, sendAnswer]
+    [peerConnection, peerId, sendAnswer]
   );
 
   const onAnswer = useCallback(
     async (message: string) => {
-      console.log("got answer");
+      console.log("got answer", message);
       await peerConnection?.setRemoteDescription({
         sdp: message,
         type: "answer",
@@ -110,9 +118,13 @@ export const PeerConnection: React.FC = () => {
 
   const onIceCandidate = useCallback(
     async (message: string) => {
-      console.log("got ice");
+      console.log("got ice", peerConnection);
       const candidate: RTCIceCandidateInit = JSON.parse(message);
-      await peerConnection?.addIceCandidate(candidate);
+      await peerConnection?.addIceCandidate(candidate).then(
+        () => console.log("addIceCandidate success"),
+        (error) =>
+          console.error("failed to add ICE Candidate", error.toString())
+      );
     },
     [peerConnection]
   );
@@ -129,6 +141,7 @@ export const PeerConnection: React.FC = () => {
         type="text"
         value={peerId}
         onChange={(e) => {
+          console.log("set peerId", e.target.value);
           setPeerId(e.target.value);
         }}
       />
