@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { SignalingSocket } from "../contracts/Signaling";
 import { web3 } from "../utils/web3";
 
-type MessageHandler = (message: string) => Promise<void>;
+type MessageHandler = (message: string, peerId: string) => Promise<void>;
 
 interface SignalingProps {
   onAnswer: MessageHandler;
-  onOffer: (message: string) => Promise<void>;
+  onOffer: (message: string, peerId: string) => Promise<void>;
   onIceCandidate: (message: string) => Promise<void>;
 }
 
@@ -37,19 +37,20 @@ export const useIncomingSignaling = ({
         })
         .on("data", async function (event: any) {
           console.log("event", event);
+          const from = event.returnValues[0] as string;
           const to = event.returnValues[1] as string;
           const type = event.returnValues[2] as string;
           const message = event.returnValues[3] as string;
           if (to === accounts[0]) {
             switch (type) {
               case "offer":
-                onOfferRef.current?.(message);
+                onOfferRef.current?.(message, from);
                 break;
               case "answer":
-                onAnswerRef.current?.(message);
+                onAnswerRef.current?.(message, from);
                 break;
               case "ice":
-                onIceRef.current?.(message);
+                onIceRef.current?.(message, from);
                 break;
             }
           }

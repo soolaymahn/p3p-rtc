@@ -4,7 +4,7 @@ import { useIncomingSignaling } from "../hooks/useIncomingSignaling";
 import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
 
 export const PeerConnection: React.FC = () => {
-  const localVideoRef = useRef<HTMLVideoElement>(null);
+  // const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const [peerConnection, setPeerConnection] =
@@ -67,7 +67,7 @@ export const PeerConnection: React.FC = () => {
         video: true,
       });
       console.log("got media");
-      localVideoRef.current!.srcObject = media;
+      // localVideoRef.current!.srcObject = media;
 
       const pc = new RTCPeerConnection();
       setPeerConnection(pc);
@@ -85,7 +85,7 @@ export const PeerConnection: React.FC = () => {
   }, [onGotIceCandidate, onIceStateChange, onRemoteStream, peerConnection]);
 
   const onOffer = useCallback(
-    async (message: string) => {
+    async (message: string, peerId: string) => {
       console.log("got offer", message);
       await peerConnection?.setRemoteDescription({
         sdp: message,
@@ -94,10 +94,11 @@ export const PeerConnection: React.FC = () => {
       const answer = await peerConnection?.createAnswer();
       console.log("answer", peerId, answer);
       peerConnection?.setLocalDescription(answer);
-      await sendAnswer(answer?.sdp ?? "");
+      setPeerId(peerId);
+      await sendAnswer(answer?.sdp ?? "", peerId);
       console.log("sent answer", answer?.sdp);
     },
-    [peerConnection, peerId, sendAnswer]
+    [peerConnection, sendAnswer]
   );
 
   const onAnswer = useCallback(
@@ -142,7 +143,7 @@ export const PeerConnection: React.FC = () => {
       />
       <br />
       <br />
-      <video
+      {/* <video
         ref={localVideoRef}
         autoPlay
         muted
@@ -150,7 +151,7 @@ export const PeerConnection: React.FC = () => {
           width: "240px",
           height: "180px",
         }}
-      />
+      /> */}
       <video
         ref={remoteVideoRef}
         autoPlay

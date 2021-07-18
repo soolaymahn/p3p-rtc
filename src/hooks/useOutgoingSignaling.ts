@@ -19,7 +19,7 @@ export const useOutgoingSignaling = ({ peerId }: SignalingProps) => {
   );
 
   const sendAnswer = useCallback(
-    async (message: string) => {
+    async (message: string, peerId: string) => {
       console.log("peerid", peerId, message);
       return new Promise((resolve, reject) => {
         Signaling.methods
@@ -30,7 +30,7 @@ export const useOutgoingSignaling = ({ peerId }: SignalingProps) => {
           });
       });
     },
-    [account, peerId]
+    [account]
   );
 
   const sendIceCandidate = useCallback(
