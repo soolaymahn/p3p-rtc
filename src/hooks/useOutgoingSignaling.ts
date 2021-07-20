@@ -19,16 +19,11 @@ export const useOutgoingSignaling = ({ peerId }: SignalingProps) => {
   );
 
   const sendAnswer = useCallback(
-    async (message: string, peerId: string) => {
+    (message: string, peerId: string) => {
       console.log("peerid", peerId, message);
-      return new Promise((resolve, reject) => {
-        Signaling.methods
-          .sendMessage(peerId, "answer", message)
-          .send({ from: account, value: 0 })
-          .once("sending", function (payload: any) {
-            resolve(payload);
-          });
-      });
+      Signaling.methods
+        .sendMessage(peerId, "answer", message)
+        .send({ from: account, value: 0 });
     },
     [account]
   );

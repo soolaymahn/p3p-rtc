@@ -10,6 +10,8 @@ export const PeerConnection: React.FC = () => {
   const [peerConnection, setPeerConnection] =
     useState<RTCPeerConnection | null>(null);
 
+  const [media, setMedia] = useState<MediaStream | null>(null);
+
   const [peerId, setPeerId] = useState("");
 
   const { sendOffer, sendAnswer, sendIceCandidate } = useOutgoingSignaling({
@@ -57,7 +59,12 @@ export const PeerConnection: React.FC = () => {
 
   const endCall = useCallback(() => {
     peerConnection?.close();
-  }, [peerConnection]);
+    media!.getTracks().forEach(function (track) {
+      track.stop();
+    });
+    setMedia(null);
+    setPeerConnection(null);
+  }, [media, peerConnection]);
 
   useEffect(() => {
     const getMedia = async () => {
@@ -72,6 +79,7 @@ export const PeerConnection: React.FC = () => {
       const pc = new RTCPeerConnection();
       setPeerConnection(pc);
       media.getTracks().forEach((track) => pc!.addTrack(track, media!));
+      setMedia(media);
     };
     getMedia();
   }, []);
@@ -95,7 +103,7 @@ export const PeerConnection: React.FC = () => {
       console.log("answer", peerId, answer);
       peerConnection?.setLocalDescription(answer);
       setPeerId(peerId);
-      await sendAnswer(answer?.sdp ?? "", peerId);
+      sendAnswer(answer?.sdp ?? "", peerId);
       console.log("sent answer", answer?.sdp);
     },
     [peerConnection, sendAnswer]
