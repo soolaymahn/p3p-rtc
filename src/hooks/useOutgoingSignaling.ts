@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { web3 } from "../utils/web3";
 import { Signaling } from "../contracts/Signaling";
+import { useEncryption } from "../context/EncryptionProvider";
 
 interface SignalingProps {
   peerId: string;
@@ -9,32 +10,33 @@ interface SignalingProps {
 export const useOutgoingSignaling = ({ peerId }: SignalingProps) => {
   const [account, setAccount] = useState<string | null>(null);
 
+  const { encrypt } = useEncryption();
+
   const sendOffer = useCallback(
     (message: string) => {
       Signaling.methods
-        .sendMessage(peerId, "offer", message)
+        .sendMessage(peerId, "offer", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account, peerId]
+    [account, encrypt, peerId]
   );
 
   const sendAnswer = useCallback(
     (message: string, peerId: string) => {
-      console.log("peerid", peerId, message);
       Signaling.methods
-        .sendMessage(peerId, "answer", message)
+        .sendMessage(peerId, "answer", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account]
+    [account, encrypt]
   );
 
   const sendIceCandidate = useCallback(
     (message: string) => {
       Signaling.methods
-        .sendMessage(peerId, "ice", message)
+        .sendMessage(peerId, "ice", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account, peerId]
+    [account, encrypt, peerId]
   );
 
   useEffect(() => {

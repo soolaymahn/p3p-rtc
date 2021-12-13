@@ -41,7 +41,7 @@ export function sjclDecrypt(ciphertext, password, salt) {
 
   try {
     return window.sjcl.codec.utf8String.fromBits(
-      window.sjcl.mode["CCM"].decrypt(aes, ciphertext, [], "", "64")
+      window.sjcl.mode["CCM"].decrypt(aes, ciphertext)
     );
   } catch (e) {
     return;
