@@ -3,11 +3,11 @@ export async function initEncryption() {
 }
 
 /* Encrypt a message */
-export function doEncrypt(password, plaintext, salt) {
+export function sjclEncrypt(plaintext, password, salt) {
   if (plaintext === "") {
     return;
   }
-  if (password.length == 0) {
+  if (password.length === 0) {
     return;
   }
 
@@ -24,7 +24,7 @@ export function doEncrypt(password, plaintext, salt) {
 }
 
 /* Decrypt a message */
-export function doDecrypt(ciphertext, salt, password) {
+export function sjclDecrypt(ciphertext, password, salt) {
   var key;
 
   if (ciphertext.length === 0) {
