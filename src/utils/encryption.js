@@ -12,52 +12,32 @@ export function sjclEncrypt(plaintext, password, salt) {
   }
 
   var p = {
-    adata: "",
-    iter: 1000,
-    mode: "CCM",
-    ts: 64,
+    v: 1,
+    iter: 1e4,
     ks: 128,
-    iv: [],
+    ts: 64,
+    mode: "ccm",
+    adata: "",
+    cipher: "aes",
     salt,
+    iv: [-477891566, -640649796, 1381343517, 817002527],
   };
-  return window.sjcl.encrypt(password, plaintext, p, {});
+  var rp = {};
+  return window.sjcl.encrypt(password, plaintext, p, rp);
 }
 
 /* Decrypt a message */
-export function sjclDecrypt(ciphertext, password, salt) {
-  var key;
+export function sjclDecrypt(ciphertext, password) {
+  var rp;
 
   if (ciphertext.length === 0) {
     return;
   }
 
-  ciphertext = window.sjcl.codec.base64.toBits(ciphertext);
-  if (key.length === 0) {
-    if (password.length) {
-      key = doPbkdf2(128, salt, password);
-    }
-  }
-  var aes = new window.sjcl.cipher.aes(key);
-
   try {
-    return window.sjcl.codec.utf8String.fromBits(
-      window.sjcl.mode["CCM"].decrypt(aes, ciphertext)
-    );
+    return sjcl.decrypt(password, ciphertext, {}, rp);
   } catch (e) {
+    console.log(e);
     return;
   }
-}
-
-function doPbkdf2(keysize, salt, password) {
-  var p = {
-    iter: 1000,
-    salt,
-  };
-
-  if (password.length === 0) {
-    return;
-  }
-
-  p = window.sjcl.misc.cachedPbkdf2(password, p);
-  return p.key.slice(0, keysize / 32);
 }

@@ -19,7 +19,7 @@ const EncryptionContext = createContext<EncryptionContextInterface>({
 // eslint-disable-next-line react/display-name
 export const EncryptionProvider = memo(
   ({ children }: { children: React.ReactNode }) => {
-    const [password, setPassword] = useState("");
+    const [password, setPassword] = useState("initial");
 
     const setPasswordInternal = useCallback((password: string) => {
       setPassword(password);
@@ -34,7 +34,7 @@ export const EncryptionProvider = memo(
 
     const decrypt = useCallback(
       (ciphertext) => {
-        return sjclDecrypt(ciphertext, password, "C2BF1CBB C2BBC1CF");
+        return sjclDecrypt(ciphertext, password);
       },
       [password]
     );

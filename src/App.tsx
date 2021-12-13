@@ -7,15 +7,12 @@ import { EncryptionProvider } from "./context/EncryptionProvider";
 import { initEncryption } from "./utils/encryption";
 
 export const App: React.FC = () => {
-  useEffect(() => {
-    initEncryption();
-  }, []);
   return (
     <div className="App">
       <header className="App-header">
         <EncryptionProvider>
-          <PeerConnection />
           <Password />
+          <PeerConnection />
         </EncryptionProvider>
       </header>
     </div>
