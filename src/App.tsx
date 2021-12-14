@@ -9,12 +9,12 @@ import { initEncryption } from "./utils/encryption";
 export const App: React.FC = () => {
   return (
     <div className="App">
-      <header className="App-header">
+      <div className="App-content">
         <EncryptionProvider>
           <Password />
           <PeerConnection />
         </EncryptionProvider>
-      </header>
+      </div>
     </div>
   );
 };

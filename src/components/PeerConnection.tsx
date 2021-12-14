@@ -144,6 +144,8 @@ export const PeerConnection: React.FC = () => {
       <input
         type="text"
         value={peerId}
+        id="peer"
+        placeholder="Peer Address"
         onChange={(e) => {
           console.log("set peerId", e.target.value);
           setPeerId(e.target.value);
@@ -164,8 +166,8 @@ export const PeerConnection: React.FC = () => {
         ref={remoteVideoRef}
         autoPlay
         style={{
-          width: "240px",
-          height: "180px",
+          width: "720px",
+          height: "480px",
         }}
       />
       <br />

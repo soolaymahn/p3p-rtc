@@ -5,15 +5,19 @@ export const Password: React.FC = () => {
   const { password, setPassword } = useEncryption();
 
   return (
-    <>
+    <div>
       <input
         type="text"
+        id="password"
         value={password}
+        placeholder="Password"
         onChange={(e) => {
           setPassword(e.target.value);
         }}
       />
       <br />
-    </>
+      <br />
+      <br />
+    </div>
   );
 };
