@@ -1,6 +1,6 @@
 import { web3, web3Websocket } from "../utils/web3";
 
-const address = "0xfA1c23aE508D7401E3aEa575Dd6Bb3164C80409a";
+const address = "0xdf9E7449C21657240d5A98a206492D9763e0DB65";
 
 const abi = [
   {
