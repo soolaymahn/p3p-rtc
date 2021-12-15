@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useEncryption } from "../context/EncryptionProvider";
 import { useWeb3 } from "../context/Web3Provider";
 
@@ -18,6 +18,8 @@ export const useIncomingSignaling = ({
   const onOfferRef = useRef<MessageHandler>(onOffer);
   const onAnswerRef = useRef<MessageHandler>(onAnswer);
   const onIceRef = useRef<MessageHandler>(onIceCandidate);
+  const scannedMessages = useRef<Set<string>>(new Set());
+  const account = useRef<string | undefined>(undefined);
 
   const { decrypt } = useEncryption();
 
@@ -28,41 +30,69 @@ export const useIncomingSignaling = ({
   onIceRef.current = onIceCandidate;
   decryptRef.current = decrypt;
 
-  const { web3, signalingSocket } = useWeb3();
+  const { web3, signalingSocket, signaling } = useWeb3();
+
+  const handleMessage = useCallback((event: any) => {
+    const from = event.returnValues[0] as string;
+    const to = event.returnValues[1] as string;
+    const type = event.returnValues[2] as string;
+    const message = decryptRef.current(event.returnValues[3]) as string;
+    if (
+      to === account.current &&
+      !scannedMessages.current.has(event.returnValues[3])
+    ) {
+      scannedMessages.current.add(event.returnValues[3]);
+
+      switch (type) {
+        case "offer":
+          onOfferRef.current(message, from);
+          break;
+        case "answer":
+          onAnswerRef.current(message, from);
+          break;
+        case "ice":
+          onIceRef.current(message, from);
+          break;
+      }
+    }
+  }, []);
+
+  const pollForMessages = useCallback(async () => {
+    if (web3 && signaling) {
+      const bn = await web3.eth.getBlockNumber();
+
+      const events = await signaling.getPastEvents("Message", {
+        // filter: { _to: account.current ?? "" },
+        fromBlock: bn - 20,
+        toBlock: "latest",
+      });
+      console.log({ polled: events });
+      events.forEach((ev: any) => {
+        handleMessage(ev);
+      });
+      setTimeout(pollForMessages, 20000);
+    }
+  }, [handleMessage, signaling, web3]);
 
   useEffect(() => {
-    const fetch = async () => {
-      if (web3 && signalingSocket) {
+    if (web3 && signalingSocket) {
+      setTimeout(pollForMessages, 20000);
+
+      signalingSocket.events
+        .Message()
+        .on("connected", function (subscriptionId: any) {
+          console.log(subscriptionId);
+        })
+        .on("data", async function (event: any) {
+          console.log("event", event);
+          handleMessage(event);
+        });
+
+      const fetchAccount = async () => {
         const accounts = await web3.eth.getAccounts();
-
-        signalingSocket.events
-          .Message()
-          .on("connected", function (subscriptionId: any) {
-            console.log(subscriptionId);
-          })
-          .on("data", async function (event: any) {
-            console.log("event", event);
-            const from = event.returnValues[0] as string;
-            const to = event.returnValues[1] as string;
-            const type = event.returnValues[2] as string;
-            const message = decryptRef.current(event.returnValues[3]) as string;
-            if (to === accounts[0]) {
-              switch (type) {
-                case "offer":
-                  onOfferRef.current(message, from);
-                  break;
-                case "answer":
-                  onAnswerRef.current(message, from);
-                  break;
-                case "ice":
-                  onIceRef.current(message, from);
-                  break;
-              }
-            }
-          });
-      }
-    };
-
-    fetch();
-  }, [signalingSocket, web3]);
+        account.current = accounts[0];
+      };
+      fetchAccount();
+    }
+  }, [handleMessage, pollForMessages, signalingSocket, web3]);
 };
