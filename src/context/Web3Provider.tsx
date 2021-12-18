@@ -66,7 +66,6 @@ export const Web3Provider = memo(
             return;
           }
           web3Ens.eth.ens.getAddress(name, (error: Error, address: string) => {
-            console.log({ address, error });
             if (address) {
               resolve(address);
             } else {

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "webrtc-adapter";
+import { useEncryption } from "../context/EncryptionProvider";
 import { useWeb3 } from "../context/Web3Provider";
 import { useIncomingSignaling } from "../hooks/useIncomingSignaling";
 import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
@@ -21,6 +22,8 @@ export const PeerConnection: React.FC = () => {
   const [ensResolvedId, setEnsResolvedId] = useState<string | undefined>(
     undefined
   );
+
+  const [isLoadingEns, setIsLoadingEns] = useState(false);
 
   const ensCancelRef = useRef<CancelFc | undefined>();
 
@@ -172,6 +175,7 @@ export const PeerConnection: React.FC = () => {
       ensCancelRef.current?.();
 
       if (name.endsWith(".eth")) {
+        setIsLoadingEns(true);
         const ensPromise = resolveEns(name);
 
         const { promise, cancel } = cancellablePromise(ensPromise);
@@ -180,11 +184,14 @@ export const PeerConnection: React.FC = () => {
           const resolvedId = await promise;
           setEnsResolvedId(resolvedId);
           setPeerId(resolvedId);
+          setIsLoadingEns(false);
         } catch {}
       }
     },
     [resolveEns]
   );
+
+  const { password } = useEncryption();
 
   return (
     <div>
@@ -192,7 +199,7 @@ export const PeerConnection: React.FC = () => {
         type="text"
         value={inputPeerId}
         id="peer"
-        placeholder="Peer Address Or ENS Name"
+        placeholder="Address/ENS"
         onChange={(e) => {
           console.log("set peerId", e.target.value);
           setInputPeerId(e.target.value);
@@ -204,7 +211,7 @@ export const PeerConnection: React.FC = () => {
       />
       <br />
       <br />
-      <p>{ensResolvedId}</p>
+      <p>{isLoadingEns ? "Fetching ENS..." : ensResolvedId}</p>
       <br />
       <br />
       {/* <video
@@ -225,8 +232,15 @@ export const PeerConnection: React.FC = () => {
         }}
       />
       <br />
-      <button onClick={startCall}>Call </button>{" "}
-      <button onClick={endCall}>Hang Up </button>{" "}
+      <button
+        disabled={isLoadingEns || !peerId || !password}
+        onClick={startCall}
+      >
+        Call{" "}
+      </button>{" "}
+      <button disabled={isLoadingEns || !peerId || !password} onClick={endCall}>
+        Hang Up{" "}
+      </button>{" "}
     </div>
   );
 };
