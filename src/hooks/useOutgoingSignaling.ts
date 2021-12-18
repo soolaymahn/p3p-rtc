@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { web3 } from "../utils/web3";
-import { Signaling } from "../contracts/Signaling";
 import { useEncryption } from "../context/EncryptionProvider";
+import { useWeb3 } from "../context/Web3Provider";
 
 interface SignalingProps {
   peerId: string;
@@ -12,40 +11,44 @@ export const useOutgoingSignaling = ({ peerId }: SignalingProps) => {
 
   const { encrypt } = useEncryption();
 
+  const { web3, signaling } = useWeb3();
+
   const sendOffer = useCallback(
     (message: string) => {
-      Signaling.methods
+      signaling?.methods
         .sendMessage(peerId, "offer", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account, encrypt, peerId]
+    [account, encrypt, peerId, signaling?.methods]
   );
 
   const sendAnswer = useCallback(
     (message: string, peerId: string) => {
-      Signaling.methods
+      signaling?.methods
         .sendMessage(peerId, "answer", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account, encrypt]
+    [account, encrypt, signaling?.methods]
   );
 
   const sendIceCandidate = useCallback(
     (message: string) => {
-      Signaling.methods
+      signaling?.methods
         .sendMessage(peerId, "ice", encrypt(message))
         .send({ from: account, value: 0 });
     },
-    [account, encrypt, peerId]
+    [account, encrypt, peerId, signaling?.methods]
   );
 
   useEffect(() => {
     const fetch = async () => {
-      const accounts = await web3.eth.getAccounts();
-      setAccount(accounts[0]);
+      if (web3) {
+        const accounts = await web3.eth.getAccounts();
+        setAccount(accounts[0]);
+      }
     };
     fetch();
-  }, []);
+  }, [web3]);
 
   return { sendOffer, sendAnswer, sendIceCandidate };
 };

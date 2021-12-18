@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useEncryption } from "../context/EncryptionProvider";
-import { SignalingSocket } from "../contracts/Signaling";
-import { web3 } from "../utils/web3";
+import { useWeb3 } from "../context/Web3Provider";
 
 type MessageHandler = (message: string, peerId: string) => Promise<void>;
 type Decrypter = (ciphertext: string) => string;
@@ -29,37 +28,41 @@ export const useIncomingSignaling = ({
   onIceRef.current = onIceCandidate;
   decryptRef.current = decrypt;
 
+  const { web3, signalingSocket } = useWeb3();
+
   useEffect(() => {
     const fetch = async () => {
-      const accounts = await web3.eth.getAccounts();
+      if (web3 && signalingSocket) {
+        const accounts = await web3.eth.getAccounts();
 
-      SignalingSocket.events
-        .Message()
-        .on("connected", function (subscriptionId: any) {
-          console.log(subscriptionId);
-        })
-        .on("data", async function (event: any) {
-          console.log("event", event);
-          const from = event.returnValues[0] as string;
-          const to = event.returnValues[1] as string;
-          const type = event.returnValues[2] as string;
-          const message = decryptRef.current(event.returnValues[3]) as string;
-          if (to === accounts[0]) {
-            switch (type) {
-              case "offer":
-                onOfferRef.current(message, from);
-                break;
-              case "answer":
-                onAnswerRef.current(message, from);
-                break;
-              case "ice":
-                onIceRef.current(message, from);
-                break;
+        signalingSocket.events
+          .Message()
+          .on("connected", function (subscriptionId: any) {
+            console.log(subscriptionId);
+          })
+          .on("data", async function (event: any) {
+            console.log("event", event);
+            const from = event.returnValues[0] as string;
+            const to = event.returnValues[1] as string;
+            const type = event.returnValues[2] as string;
+            const message = decryptRef.current(event.returnValues[3]) as string;
+            if (to === accounts[0]) {
+              switch (type) {
+                case "offer":
+                  onOfferRef.current(message, from);
+                  break;
+                case "answer":
+                  onAnswerRef.current(message, from);
+                  break;
+                case "ice":
+                  onIceRef.current(message, from);
+                  break;
+              }
             }
-          }
-        });
+          });
+      }
     };
 
     fetch();
-  }, []);
+  }, [signalingSocket, web3]);
 };

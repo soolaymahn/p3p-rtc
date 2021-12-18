@@ -4,16 +4,19 @@ import "./App.css";
 import { Password } from "./components/Password";
 import { PeerConnection } from "./components/PeerConnection";
 import { EncryptionProvider } from "./context/EncryptionProvider";
+import { Web3Provider } from "./context/Web3Provider";
 import { initEncryption } from "./utils/encryption";
 
 export const App: React.FC = () => {
   return (
     <div className="App">
       <div className="App-content">
-        <EncryptionProvider>
-          <Password />
-          <PeerConnection />
-        </EncryptionProvider>
+        <Web3Provider>
+          <EncryptionProvider>
+            <Password />
+            <PeerConnection />
+          </EncryptionProvider>
+        </Web3Provider>
       </div>
     </div>
   );

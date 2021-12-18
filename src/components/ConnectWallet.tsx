@@ -1,30 +1,16 @@
 import React, { useCallback, useState, useEffect } from "react";
 import styled from "styled-components";
+import { useWeb3 } from "../context/Web3Provider";
 
 interface ConnectWalletProps {}
 
 export const ConnectWallet: React.FC<ConnectWalletProps> = ({}) => {
-  const [connected, setConnected] = useState(false);
-  const connectWallet = useCallback(async () => {
-    try {
-      const promise = (window as any).ethereum.request({
-        method: "eth_requestAccounts",
-      }) as Promise<void>;
-      await promise;
-      setConnected(true);
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    setConnected((window as any).ethereum.isConnected());
-  }, []);
+  const { isConnected, connectWallet } = useWeb3();
 
   return (
     <Container>
-      <Button onClick={connectWallet} disabled={connected}>
-        {connected ? "Connected" : "Connect Wallet"}
+      <Button onClick={connectWallet} disabled={isConnected}>
+        {isConnected ? "Connected" : "Connect Wallet"}
       </Button>
     </Container>
   );

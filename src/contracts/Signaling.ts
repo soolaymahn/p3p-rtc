@@ -1,8 +1,8 @@
-import { web3, web3Websocket } from "../utils/web3";
+import { AbiItem } from "web3-utils";
 
-const address = "0xdf9E7449C21657240d5A98a206492D9763e0DB65";
+export const SignalingAddress = "0xdf9E7449C21657240d5A98a206492D9763e0DB65";
 
-const abi = [
+export const SignalingABI: AbiItem[] = [
   {
     anonymous: false,
     inputs: [
@@ -58,6 +58,3 @@ const abi = [
     type: "function",
   },
 ];
-
-export const Signaling = new web3.eth.Contract(abi, address);
-export const SignalingSocket = new web3Websocket.eth.Contract(abi, address);
