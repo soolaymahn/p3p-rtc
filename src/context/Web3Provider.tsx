@@ -38,7 +38,7 @@ export const Web3Provider = memo(
     >(undefined);
 
     useEffect(() => {
-      const isConnected = (window as any).ethereum.isConnected();
+      const isConnected = (window as any).ethereum?.isConnected();
       setConnected(isConnected);
       if (isConnected) {
         const web3Var = new Web3((window as any).ethereum);
