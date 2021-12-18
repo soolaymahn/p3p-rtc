@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import "webrtc-adapter";
+import { useWeb3 } from "../context/Web3Provider";
 import { useIncomingSignaling } from "../hooks/useIncomingSignaling";
 import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
+import { CancelFc, cancellablePromise } from "../utils/cancellable";
 
 export const PeerConnection: React.FC = () => {
   // const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -13,6 +15,14 @@ export const PeerConnection: React.FC = () => {
   const [media, setMedia] = useState<MediaStream | null>(null);
 
   const [peerId, setPeerId] = useState("");
+
+  const [inputPeerId, setInputPeerId] = useState("");
+
+  const [ensResolvedId, setEnsResolvedId] = useState<string | undefined>(
+    undefined
+  );
+
+  const ensCancelRef = useRef<CancelFc | undefined>();
 
   const { sendOffer, sendAnswer, sendIceCandidate } = useOutgoingSignaling({
     peerId,
@@ -139,18 +149,62 @@ export const PeerConnection: React.FC = () => {
     onIceCandidate,
   });
 
+  const { getEnsName } = useWeb3();
+
+  const resolveEns = useCallback(
+    (name: string) => {
+      return new Promise<string>((resolve, reject) => {
+        setTimeout(async () => {
+          try {
+            const address = await getEnsName(name);
+            resolve(address);
+          } catch {
+            reject();
+          }
+        }, 3000);
+      });
+    },
+    [getEnsName]
+  );
+
+  const handleEnsUpdate = useCallback(
+    async (name: string) => {
+      ensCancelRef.current?.();
+
+      if (name.endsWith(".eth")) {
+        const ensPromise = resolveEns(name);
+
+        const { promise, cancel } = cancellablePromise(ensPromise);
+        ensCancelRef.current = cancel;
+        try {
+          const resolvedId = await promise;
+          setEnsResolvedId(resolvedId);
+          setPeerId(resolvedId);
+        } catch {}
+      }
+    },
+    [resolveEns]
+  );
+
   return (
     <div>
       <input
         type="text"
-        value={peerId}
+        value={inputPeerId}
         id="peer"
-        placeholder="Peer Address"
+        placeholder="Peer Address Or ENS Name"
         onChange={(e) => {
           console.log("set peerId", e.target.value);
-          setPeerId(e.target.value);
+          setInputPeerId(e.target.value);
+          if (e.target.value.startsWith("0x")) {
+            setPeerId(e.target.value);
+          }
+          handleEnsUpdate(e.target.value);
         }}
       />
+      <br />
+      <br />
+      <p>{ensResolvedId}</p>
       <br />
       <br />
       {/* <video
