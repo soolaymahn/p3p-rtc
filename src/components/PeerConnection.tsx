@@ -7,7 +7,7 @@ import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
 import { CancelFc, cancellablePromise } from "../utils/cancellable";
 
 export const PeerConnection: React.FC = () => {
-  // const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const [peerConnection, setPeerConnection] =
@@ -31,6 +31,8 @@ export const PeerConnection: React.FC = () => {
     peerId,
   });
 
+  const [status, setStatus] = useState("");
+
   const onRemoteStream = useCallback((e: RTCTrackEvent) => {
     console.log("got remote stream");
     const remoteVideo = remoteVideoRef.current!;
@@ -42,6 +44,7 @@ export const PeerConnection: React.FC = () => {
   const onIceStateChange = useCallback(
     (e) => {
       console.log("ICE state:", peerConnection!.iceConnectionState);
+      setStatus(peerConnection!.iceConnectionState);
     },
     [peerConnection]
   );
@@ -86,8 +89,9 @@ export const PeerConnection: React.FC = () => {
         audio: true,
         video: true,
       });
-      console.log("got media");
-      // localVideoRef.current!.srcObject = media;
+      console.log("got media", media);
+      localVideoRef.current!.srcObject = media;
+      setStatus("Not connected");
 
       const pc = new RTCPeerConnection();
       setPeerConnection(pc);
@@ -185,7 +189,9 @@ export const PeerConnection: React.FC = () => {
           setEnsResolvedId(resolvedId);
           setPeerId(resolvedId);
           setIsLoadingEns(false);
-        } catch {}
+        } catch {
+          setIsLoadingEns(false);
+        }
       }
     },
     [resolveEns]
@@ -194,7 +200,14 @@ export const PeerConnection: React.FC = () => {
   const { password } = useEncryption();
 
   return (
-    <div>
+    <div
+      style={{
+        position: "relative",
+        width: "720px",
+        height: "480px",
+        maxWidth: "100%",
+      }}
+    >
       <input
         type="text"
         value={inputPeerId}
@@ -210,37 +223,49 @@ export const PeerConnection: React.FC = () => {
         }}
       />
       <br />
-      <br />
       <p>{isLoadingEns ? "Fetching ENS..." : ensResolvedId}</p>
       <br />
-      <br />
-      {/* <video
-        ref={localVideoRef}
-        autoPlay
-        muted
-        style={{
-          width: "240px",
-          height: "180px",
-        }}
-      /> */}
-      <video
-        ref={remoteVideoRef}
-        autoPlay
-        style={{
-          width: "720px",
-          height: "480px",
-        }}
-      />
-      <br />
       <button
-        disabled={isLoadingEns || !peerId || !password}
+        disabled={
+          isLoadingEns || !peerId || !password || status === "connected"
+        }
         onClick={startCall}
       >
         Call{" "}
       </button>{" "}
-      <button disabled={isLoadingEns || !peerId || !password} onClick={endCall}>
+      <button
+        disabled={
+          isLoadingEns || !peerId || !password || status !== "connected"
+        }
+        onClick={endCall}
+      >
         Hang Up{" "}
       </button>{" "}
+      <br />
+      <div id="videos">
+        <video
+          ref={localVideoRef}
+          autoPlay
+          muted
+          id="local-video"
+          // style={{
+          //   width: "240px",
+          //   height: "180px",
+          // }}
+        />
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          id="remote-video"
+          // style={{
+          //   width: "720px",
+          //   height: "480px",
+          // }}
+        />
+        <div className="status">
+          <p>{status}</p>
+        </div>
+      </div>
     </div>
   );
 };

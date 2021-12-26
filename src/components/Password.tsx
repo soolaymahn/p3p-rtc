@@ -5,7 +5,11 @@ export const Password: React.FC = () => {
   const { password, setPassword } = useEncryption();
 
   return (
-    <div>
+    <div
+      style={{
+        maxWidth: "100%",
+      }}
+    >
       <input
         type="text"
         id="password"
