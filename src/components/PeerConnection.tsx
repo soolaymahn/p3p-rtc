@@ -247,6 +247,7 @@ export const PeerConnection: React.FC = () => {
           ref={localVideoRef}
           autoPlay
           muted
+          playsInline
           id="local-video"
           // style={{
           //   width: "240px",
@@ -256,6 +257,7 @@ export const PeerConnection: React.FC = () => {
         <video
           ref={remoteVideoRef}
           autoPlay
+          playsInline
           id="remote-video"
           // style={{
           //   width: "720px",
