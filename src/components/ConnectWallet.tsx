@@ -10,7 +10,7 @@ export const ConnectWallet: React.FC<ConnectWalletProps> = ({}) => {
   return (
     <Container>
       <Button onClick={connectWallet} disabled={isConnected}>
-        {isConnected ? "Connected" : "Connect Polygon Metamask"}
+        {isConnected ? "Connected" : "Connect Polygon"}
       </Button>
     </Container>
   );
@@ -25,6 +25,6 @@ const Container = styled.div`
   align-items: flex-end;
 `;
 const Button = styled.button`
-  margin: 50px 20px 50px 0px;
-  font-size: 18px;
+  margin: 50px 20px 50px 50px;
+  font-size: 14px;
 `;

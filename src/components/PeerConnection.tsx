@@ -5,6 +5,7 @@ import { useWeb3 } from "../context/Web3Provider";
 import { useIncomingSignaling } from "../hooks/useIncomingSignaling";
 import { useOutgoingSignaling } from "../hooks/useOutgoingSignaling";
 import { CancelFc, cancellablePromise } from "../utils/cancellable";
+import { isMobile } from "react-device-detect";
 
 export const PeerConnection: React.FC = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -86,13 +87,12 @@ export const PeerConnection: React.FC = () => {
     const getMedia = async () => {
       console.log("getting media");
       const media = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: !isMobile,
         video: true,
       });
       console.log("got media", media);
       localVideoRef.current!.srcObject = media;
       setStatus("Not connected");
-
       const pc = new RTCPeerConnection();
       setPeerConnection(pc);
       media.getTracks().forEach((track) => pc!.addTrack(track, media!));
